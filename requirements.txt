@@ -1,0 +1,8 @@
+Django>=5.0
+djangorestframework
+djangorestframework-simplejwt
+python-decouple
+psycopg2-binary
+redis
+celery
+django-cors-headers

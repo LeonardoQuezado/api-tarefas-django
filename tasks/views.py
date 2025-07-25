@@ -18,6 +18,7 @@ from .serializers import (
     TaskListSerializer,
     CategorySerializer
 )
+from .tasks import send_welcome_email_task
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -52,30 +53,37 @@ class UserRegistrationView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
     
     def send_welcome_email(self, user):
-        """Enviar email de boas-vindas"""
+        """Enviar email de boas-vindas - FORÇANDO ENVIO SÍNCRONO para testes"""
+        print(f"🔄 Enviando email de boas-vindas para: {user.email}")
+        
+        # FORÇAR envio síncrono para garantir que funcione
         try:
             send_mail(
                 subject='Bem-vindo à API de Tarefas!',
                 message=f'''
-                Olá {user.first_name or user.username}!
-                
-                Bem-vindo à nossa API de gerenciamento de tarefas!
-                
-                Sua conta foi criada com sucesso. Agora você pode:
-                - Criar e gerenciar suas tarefas
-                - Organizar por categorias
-                - Acompanhar seu progresso
-                
-                Comece agora mesmo e organize sua produtividade!
-                
-                Equipe API Tarefas
+Olá {user.first_name or user.username}!
+
+Bem-vindo à nossa API de gerenciamento de tarefas!
+
+Sua conta foi criada com sucesso. Agora você pode:
+- Criar e gerenciar suas tarefas
+- Organizar por categorias
+- Acompanhar seu progresso
+
+Comece agora mesmo e organize sua produtividade!
+
+Equipe API Tarefas
                 ''',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
             )
+            print(f"✅ Email enviado SÍNCRONAMENTE para: {user.email}")
+            print(f"📧 Verifique no Mailtrap: https://mailtrap.io/inboxes")
+            
         except Exception as e:
-            print(f"Erro ao enviar email: {e}")
+            print(f"❌ ERRO AO ENVIAR EMAIL: {e}")
+            print(f"Verificar configurações SMTP no .env")
 
 
 class UserLoginView(generics.GenericAPIView):

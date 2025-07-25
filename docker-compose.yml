@@ -33,19 +33,19 @@ services:
       - db
       - redis
 
-  # worker:
-  #   build: .
-  #   command: celery -A core worker --loglevel=info
-  #   volumes:
-  #     - .:/app
-  #   environment:
-  #     - DEBUG=True
-  #     - SECRET_KEY=django-secret-key-for-development
-  #     - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
-  #     - REDIS_URL=redis://redis:6379/1
-  #   depends_on:
-  #     - db
-  #     - redis
+  worker:
+    build: .
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-secret-key-for-development
+      - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
 
 volumes:
   postgres_data:

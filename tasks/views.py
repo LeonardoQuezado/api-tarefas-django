@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.cache import cache
+from django.db.models import Q
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 
@@ -21,6 +22,8 @@ from .serializers import (
     CategorySerializer
 )
 from .tasks import send_welcome_email_task
+
+
 @extend_schema_view(
     post=extend_schema(
         summary="Registrar novo usuário",
@@ -41,7 +44,6 @@ from .tasks import send_welcome_email_task
         ]
     )
 )
-
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
@@ -106,6 +108,7 @@ Equipe API Tarefas
             print(f"❌ ERRO AO ENVIAR EMAIL: {e}")
             print(f"Verificar configurações SMTP no .env")
 
+
 @extend_schema_view(
     post=extend_schema(
         summary="Fazer login",
@@ -122,7 +125,6 @@ Equipe API Tarefas
         ]
     )
 )
-
 class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = [AllowAny]
@@ -147,6 +149,7 @@ class UserLoginView(generics.GenericAPIView):
                 'access': str(refresh.access_token),
             }
         })
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -180,7 +183,6 @@ class UserLoginView(generics.GenericAPIView):
         tags=['tasks']
     )
 )
-
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -247,11 +249,12 @@ class TaskViewSet(viewsets.ModelViewSet):
             ),
         ]
     )
-
     @action(detail=False, methods=['get'])
     def agenda(self, request):
         """Endpoint de agenda com cache"""
-        cache_key = f"agenda_user_{request.user.id}"
+        # Criar cache key único por usuário e parâmetros de filtro
+        query_params = request.query_params.dict()
+        cache_key = f"agenda_user_{request.user.id}_{hash(str(sorted(query_params.items())))}"
         
         # Tentar obter do cache
         cached_data = cache.get(cache_key)
@@ -261,30 +264,54 @@ class TaskViewSet(viewsets.ModelViewSet):
         # Se não estiver no cache, buscar do banco
         queryset = self.get_queryset().order_by('execution_date')
         
-        # Aplicar filtros se fornecidos
+        # Aplicar filtro de data (CORRIGIDO)
         execution_date = request.query_params.get('execution_date')
         if execution_date:
             try:
+                # Converter string YYYY-MM-DD para objeto date
                 date_obj = timezone.datetime.strptime(execution_date, '%Y-%m-%d').date()
+                # Filtrar apenas pela DATA (ignorando hora)
                 queryset = queryset.filter(execution_date__date=date_obj)
+                print(f"🔍 Filtrando por data: {date_obj}")
+                print(f"📊 Tarefas encontradas: {queryset.count()}")
             except ValueError:
+                print(f"❌ Data inválida fornecida: {execution_date}")
                 pass
         
         # Filtros adicionais
         status_filter = request.query_params.get('status')
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+            print(f"🔍 Filtrando por status: {status_filter}")
             
         category_filter = request.query_params.get('categories')
         if category_filter:
-            queryset = queryset.filter(categories__id=category_filter)
+            try:
+                category_id = int(category_filter)
+                queryset = queryset.filter(categories__id=category_id)
+                print(f"🔍 Filtrando por categoria ID: {category_id}")
+            except ValueError:
+                print(f"❌ Categoria inválida: {category_filter}")
+        
+        # Aplicar busca se fornecida
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
+            print(f"🔍 Buscando por: {search}")
         
         serializer = TaskListSerializer(queryset, many=True)
         
-        # Cachear por 15 minutos
-        cache.set(cache_key, serializer.data, 60 * 15)
+        # Cachear por 15 minutos apenas se não houver filtros específicos
+        if not any([execution_date, status_filter, category_filter, search]):
+            cache.set(cache_key, serializer.data, 60 * 15)
+        else:
+            # Cache mais curto para filtros específicos
+            cache.set(cache_key, serializer.data, 60 * 5)  # 5 minutos
         
         return Response(serializer.data)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -298,7 +325,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         tags=['categories']  
     )
 )
-
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer

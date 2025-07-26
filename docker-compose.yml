@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:15
@@ -7,18 +9,14 @@ services:
       POSTGRES_DB: tasks_db
       POSTGRES_USER: tasks_user
       POSTGRES_PASSWORD: tasks_password
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tasks_user -d tasks_db"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -31,46 +29,82 @@ services:
       - "8000:8000"
     environment:
       - DEBUG=True
-      - SECRET_KEY=django-secret-key-for-development
+      - SECRET_KEY=django-secret-key-for-development-change-in-production
       - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
       - REDIS_URL=redis://redis:6379/1
-      # Email settings from .env
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS}
+      - EMAIL_HOST=sandbox.smtp.mailtrap.io
+      - EMAIL_PORT=2525
+      - EMAIL_HOST_USER=b8715e477e0f41
+      - EMAIL_HOST_PASSWORD=6b5f0e5db7990f
+      - EMAIL_USE_TLS=True
+      - DEFAULT_FROM_EMAIL=noreply@apitarefas.com
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - .:/app
-    env_file:
-      - .env
+    command: |
+      bash -c "
+        echo '🚀 === INICIANDO API DE TAREFAS ==='
+        echo '🔄 Aguardando serviços...'
+        
+        # Wait for database
+        until pg_isready -h db -p 5432 -U tasks_user; do
+          echo '⏳ Aguardando PostgreSQL...'
+          sleep 2
+        done
+        echo '✅ PostgreSQL conectado!'
+        
+        # Wait for Redis
+        until nc -z redis 6379; do
+          echo '⏳ Aguardando Redis...'
+          sleep 1
+        done
+        echo '✅ Redis conectado!'
+        
+        echo '📋 Executando migrações...'
+        python manage.py migrate --noinput
+        
+        echo '🏗️ Coletando arquivos estáticos...'
+        python manage.py collectstatic --noinput
+        
+        echo '👤 Inicializando dados padrão...'
+        python manage.py init_data
+        
+        echo ''
+        echo '🎉 === API PRONTA PARA USO ==='
+        echo '📍 Acesse: http://localhost:8000/api/'
+        echo '📚 Docs: http://localhost:8000/api/docs/'
+        echo '⚡ Admin: http://localhost:8000/admin/'
+        echo ''
+        
+        echo '🚀 Iniciando servidor Django...'
+        python manage.py runserver 0.0.0.0:8000
+      "
+    restart: unless-stopped
 
   worker:
     build: .
-    command: celery -A core worker --loglevel=info
     environment:
       - DEBUG=True
-      - SECRET_KEY=django-secret-key-for-development
+      - SECRET_KEY=django-secret-key-for-development-change-in-production
       - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
       - REDIS_URL=redis://redis:6379/0
-      # Email settings from .env
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS}
+      - EMAIL_HOST=sandbox.smtp.mailtrap.io
+      - EMAIL_PORT=2525
+      - EMAIL_HOST_USER=b8715e477e0f41
+      - EMAIL_HOST_PASSWORD=6b5f0e5db7990f
+      - EMAIL_USE_TLS=True
     depends_on:
-      web:
-        condition: service_started
-    volumes:
-      - .:/app
-    env_file:
-      - .env
+      - web
+    command: |
+      bash -c "
+        echo '🔄 Aguardando API inicializar...'
+        sleep 15
+        echo '🚀 Iniciando Celery Worker...'
+        celery -A core worker --loglevel=info
+      "
+    restart: unless-stopped
 
 volumes:
   postgres_data:

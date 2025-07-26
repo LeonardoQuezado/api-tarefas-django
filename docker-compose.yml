@@ -11,17 +11,24 @@ services:
       POSTGRES_PASSWORD: tasks_password
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks_user -d tasks_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
     environment:
@@ -29,23 +36,40 @@ services:
       - SECRET_KEY=django-secret-key-for-development
       - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
       - REDIS_URL=redis://redis:6379/1
+      # Configurações de email para desenvolvimento
+      - EMAIL_HOST=sandbox.smtp.mailtrap.io
+      - EMAIL_PORT=2525
+      - EMAIL_HOST_USER=
+      - EMAIL_HOST_PASSWORD=
+      - EMAIL_USE_TLS=True
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
 
   worker:
     build: .
     command: celery -A core worker --loglevel=info
-    volumes:
-      - .:/app
     environment:
       - DEBUG=True
       - SECRET_KEY=django-secret-key-for-development
       - DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
       - REDIS_URL=redis://redis:6379/0
+      - EMAIL_HOST=sandbox.smtp.mailtrap.io
+      - EMAIL_PORT=2525
+      - EMAIL_HOST_USER=
+      - EMAIL_HOST_PASSWORD=
+      - EMAIL_USE_TLS=True
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
 
 volumes:
   postgres_data:

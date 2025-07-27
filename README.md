@@ -14,7 +14,6 @@ API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST 
 - [Tecnologias](#️-tecnologias)
 - [Instalação e Execução](#-instalação-e-execução)
 - [Documentação da API](#-documentação-da-api)
-- [Resultados dos Testes](#-resultados-dos-testes)
 - [Estrutura do Projeto](#️-estrutura-do-projeto)
 - [Variáveis de Ambiente](#-variáveis-de-ambiente)
 - [Deploy](#-deploy)

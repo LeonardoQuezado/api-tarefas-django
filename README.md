@@ -76,7 +76,7 @@ Esta API está pronta para avaliação técnica:
 
 1. **Clone o repositório:**
 ```bash
-git clone https://github.com/seu-usuario/api-tarefas-django.git
+git clone https://github.com/LeonardoQuezado/api-tarefas-django.git
 cd api-tarefas-django
 ```
 

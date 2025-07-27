@@ -323,8 +323,11 @@ Authorization: Bearer {access_token}
 ## 🧪 Exemplos de Uso
 
 ### Criar Tarefa Completa
-```json
+```http
 POST /api/tasks/
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
 {
     "title": "Reunião importante",
     "description": "Apresentação do projeto para cliente",
@@ -337,14 +340,23 @@ POST /api/tasks/
 ### Filtrar Agenda por Data
 ```http
 GET /api/tasks/agenda/?execution_date=2025-07-26
-# Retorna apenas tarefas do dia 26/07/2025
+Authorization: Bearer {access_token}
 ```
+**Retorna apenas tarefas do dia 26/07/2025**
 
 ### Buscar Tarefas
 ```http
 GET /api/tasks/?search=reunião&status=pendente
-# Busca "reunião" em tarefas pendentes
+Authorization: Bearer {access_token}
 ```
+**Busca "reunião" em tarefas pendentes**
+
+### Agenda com Filtros Combinados
+```http
+GET /api/tasks/agenda/?execution_date=2025-07-26&status=pendente&categories=1
+Authorization: Bearer {access_token}
+```
+**Tarefas de hoje, pendentes, da categoria 1**
 
 ## 🏗️ Estrutura do Projeto
 

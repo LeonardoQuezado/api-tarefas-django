@@ -41,7 +41,7 @@ API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST 
 
 ### ✅ Integração e Deploy
 -  Containerização completa com Docker
--  Envio assíncrono de emails com Celery
+-  Envio síncrono de emails com Celery
 -  Suporte a PostgreSQL
 -  Configuração via variáveis de ambiente
 
@@ -51,7 +51,6 @@ API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST 
 - **Autenticação:** JWT via djangorestframework-simplejwt
 - **Banco de Dados:** PostgreSQL (Docker), SQLite (desenvolvimento)
 - **Cache:** Redis 7
-- **Queue:** Celery para emails assíncronos
 - **Containerização:** Docker & Docker Compose
 - **Email:** SMTP com Mailtrap (testado e funcionando)
 - **Documentação:** Swagger/OpenAPI automática
@@ -139,11 +138,6 @@ docker run -d -p 6379:6379 redis:alpine
 6. **Execute o servidor:**
 ```bash
 python manage.py runserver
-```
-
-7. **Execute o worker Celery (opcional, para emails assíncronos):**
-```bash
-celery -A core worker --loglevel=info
 ```
 
 ## 📚 Documentação da API

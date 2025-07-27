@@ -2,8 +2,8 @@
 
 [![Tests](https://img.shields.io/badge/tests-12%2F12%20passing-brightgreen)](https://github.com/seu-usuario/api-tarefas-django)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/seu-usuario/api-tarefas-django)
-[![Django](https://img.shields.io/badge/Django-5.0+-blue)](https://djangoproject.com/)
-[![DRF](https://img.shields.io/badge/DRF-3.14+-blue)](https://www.django-rest-framework.org/)
+[![Django](https://img.shields.io/badge/Django-5.2+-blue)](https://djangoproject.com/)
+[![DRF](https://img.shields.io/badge/DRF-3.16+-blue)](https://www.django-rest-framework.org/)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue)](https://docker.com/)
 
 API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST Framework, autenticação JWT, cache Redis e containerização Docker.
@@ -47,15 +47,26 @@ API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST 
 
 ## 🛠️ Tecnologias
 
-- **Backend:** Django 5.0+, Django REST Framework
+- **Backend:** Django 5.2.4, Django REST Framework 3.16
 - **Autenticação:** JWT via djangorestframework-simplejwt
-- **Banco de Dados:** PostgreSQL (produção), SQLite (desenvolvimento)
-- **Cache:** Redis
-- **Queue:** Celery para processamento assíncrono
+- **Banco de Dados:** PostgreSQL (Docker), SQLite (desenvolvimento)
+- **Cache:** Redis 7
+- **Queue:** Celery para emails assíncronos
 - **Containerização:** Docker & Docker Compose
-- **Email:** SMTP (Mailtrap para testes)
+- **Email:** SMTP com Mailtrap (testado e funcionando)
+- **Documentação:** Swagger/OpenAPI automática
 
 ## 🔧 Instalação e Execução
+
+### 💼 Para Recrutadores (Setup Rápido)
+
+Esta API está pronta para avaliação técnica:
+
+- ✅ **Docker pronto:** `docker-compose up --build`
+- ✅ **Configuração automática:** PostgreSQL + Redis + Django
+- ✅ **Documentação interativa:** http://localhost:8000/api/docs/
+- ✅ **Emails funcionando:** Configure .env para Mailtrap 
+- ✅ **Dados de exemplo:** Categorias criadas automaticamente
 
 ### Pré-requisitos
 - Docker e Docker Compose
@@ -71,7 +82,7 @@ cd api-tarefas-django
 
 2. **Configure as variáveis de ambiente:**
 ```bash
-cp .env.example .env
+touch .env
 # Edite o arquivo .env com suas configurações
 ```
 
@@ -81,9 +92,10 @@ docker-compose up --build
 ```
 
 4. **Acesse a aplicação:**
-- **API:** http://localhost:8000/api/
-- **Admin:** http://localhost:8000/admin/
-- **Documentação:** http://localhost:8000/api/ (DRF Browsable API)
+- ** Documentação Swagger:** http://localhost:8000/api/docs/
+- ** ReDoc:** http://localhost:8000/api/redoc/
+- ** Admin Django:** http://localhost:8000/admin/
+- ** API Base:** http://localhost:8000/api/
 
 5. **Criar superusuário (opcional):**
 ```bash
@@ -109,8 +121,8 @@ pip install -r requirements.txt
 
 3. **Configure as variáveis de ambiente:**
 ```bash
-cp .env.example .env
-# Edite o arquivo .env
+touch .env
+# Edite o arquivo .env com suas configurações
 ```
 
 4. **Execute as migrações:**
@@ -308,85 +320,35 @@ Authorization: Bearer {access_token}
 | `em_andamento` | Tarefa em execução |
 | `concluida` | Tarefa finalizada |
 
-### 🔗 Collection do Postman
+## 🧪 Exemplos de Uso
 
-Para facilitar os testes, você pode importar nossa collection do Postman:
-
+### Criar Tarefa Completa
 ```json
+POST /api/tasks/
 {
-    "info": {
-        "name": "API Tarefas - Collection",
-        "description": "Collection completa para testar a API de Gerenciamento de Tarefas"
-    },
-    "auth": {
-        "type": "bearer",
-        "bearer": [{"key": "token", "value": "{{access_token}}"}]
-    },
-    "variable": [
-        {"key": "base_url", "value": "http://localhost:8000/api"},
-        {"key": "access_token", "value": ""}
-    ]
+    "title": "Reunião importante",
+    "description": "Apresentação do projeto para cliente",
+    "execution_date": "2025-07-27T14:00:00-03:00",
+    "status": "pendente",
+    "category_ids": [1, 3]
 }
 ```
+
+### Filtrar Agenda por Data
+```http
+GET /api/tasks/agenda/?execution_date=2025-07-26
+# Retorna apenas tarefas do dia 26/07/2025
+```
+
+### Buscar Tarefas
+```http
+GET /api/tasks/?search=reunião&status=pendente
+# Busca "reunião" em tarefas pendentes
 
 ## 🧪 Resultados dos Testes
 
 ### 📊 Estatísticas dos Testes Automatizados
 
-```
-📊 ESTATÍSTICAS GERAIS:
-   Total de testes executados: 12
-   ✅ Testes aprovados: 12
-   ❌ Testes falharam: 0
-   📈 Taxa de sucesso: 100.0%
-```
-
-### ✅ Funcionalidades Testadas e Aprovadas
-
-| # | Funcionalidade | Status | Detalhes |
-|---|----------------|--------|----------|
-| 1 | API Disponibilidade | ✅ PASSOU | Status 401 (esperado sem auth) |
-| 2 | Registro + Email | ✅ PASSOU | Status 201, JWT gerado, Email enviado |
-| 3 | Login JWT | ✅ PASSOU | Access e Refresh tokens gerados |
-| 4 | Proteção de Endpoints | ✅ PASSOU | Status 401 sem autenticação |
-| 5 | Gestão de Categorias | ✅ PASSOU | 3 categorias, paginação implementada |
-| 6 | Criação de Tarefa | ✅ PASSOU | Todos os campos e relacionamentos |
-| 7 | Isolamento de Usuários | ✅ PASSOU | Cada usuário vê apenas suas tarefas |
-| 8 | Cache Redis | ✅ PASSOU | Performance melhorada (18ms → 12ms) |
-| 9 | Filtros da Agenda | ✅ PASSOU | Status, data e busca funcionando |
-| 10 | Invalidação de Cache | ✅ PASSOU | Cache atualizado após modificações |
-| 11 | Busca de Tarefas | ✅ PASSOU | Busca por título e descrição |
-| 12 | Exclusão de Tarefa | ✅ PASSOU | Status 204, remoção confirmada |
-
-### 🎯 Conformidade com Requisitos
-
-#### ✅ Requisitos Obrigatórios (100% Atendidos)
-- ✅ Autenticação JWT completa
-- ✅ CRUD de tarefas com todos os campos
-- ✅ Gestão de categorias via Django Admin
-- ✅ Email de boas-vindas funcionando
-- ✅ Cache Redis com invalidação
-- ✅ Endpoint de agenda ordenado
-- ✅ Filtros por data, título, descrição, status, categorias
-- ✅ Containerização Docker
-- ✅ PostgreSQL configurado
-- ✅ Isolamento por usuário
-
-#### ✅ Requisitos Opcionais (Implementados)
-- ✅ Envio assíncrono de email com Celery
-- ✅ Worker configurado no Docker
-- ✅ Fallback síncrono para desenvolvimento
-
-### 🧪 Executar os Testes
-
-Para executar os testes automatizados:
-
-```bash
-# Certifique-se que a API está rodando
-python manage.py runserver
-
-# Em outro terminal, execute os testes
-python test_final_complete.py
 ```
 
 ## 🏗️ Estrutura do Projeto
@@ -412,7 +374,6 @@ api-tarefas-django/
 ├── 📄 requirements.txt        # Dependências Python
 ├── 📄 Dockerfile             # Container da aplicação
 ├── 📄 docker-compose.yml     # Orquestração dos serviços
-├── 📄 .env                   # Variáveis de ambiente
 ├── 📄 .gitignore            # Arquivos ignorados
 └── 📄 README.md             # Esta documentação
 ```
@@ -422,23 +383,26 @@ api-tarefas-django/
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
-# Django
+# Configurações do Django
 DEBUG=True
-SECRET_KEY=sua-chave-secreta-muito-segura
+SECRET_KEY=django-secret-key-for-development-change-in-production
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database
-DATABASE_URL=postgresql://tasks_user:tasks_password@db:5432/tasks_db
+# Database (PostgreSQL no Docker)
+DATABASE_URL=postgresql://user:password@postgres:5432/dbname
 
-# Redis
-REDIS_URL=redis://redis:6379/0
+# Cache Redis (Redis no Docker)
+REDIS_URL=redis://redis:6379/1
 
-# Email (Mailtrap para desenvolvimento)
+# Email Settings (Mailtrap - suas credenciais estão corretas)
 EMAIL_HOST=sandbox.smtp.mailtrap.io
 EMAIL_PORT=2525
 EMAIL_HOST_USER=seu_usuario_mailtrap
 EMAIL_HOST_PASSWORD=sua_senha_mailtrap
 EMAIL_USE_TLS=True
+
+# Configurações adicionais
+DEFAULT_FROM_EMAIL=noreply@seudominio.com
 ```
 
 ### 📧 Configuração do Email (Mailtrap)
@@ -490,12 +454,3 @@ gunicorn core.wsgi:application
 -  Validação rigorosa de dados de entrada
 -  Configuração de CORS para frontend
 -  Senhas hasheadas com algoritmos seguros do Django
-
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request

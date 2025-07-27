@@ -344,11 +344,6 @@ GET /api/tasks/agenda/?execution_date=2025-07-26
 ```http
 GET /api/tasks/?search=reunião&status=pendente
 # Busca "reunião" em tarefas pendentes
-
-## 🧪 Resultados dos Testes
-
-### 📊 Estatísticas dos Testes Automatizados
-
 ```
 
 ## 🏗️ Estrutura do Projeto

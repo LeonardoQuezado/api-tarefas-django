@@ -104,7 +104,7 @@ docker-compose exec web python manage.py createsuperuser
 
 1. **Clone e configure o ambiente:**
 ```bash
-git clone https://github.com/seu-usuario/api-tarefas-django.git
+git clone https://github.com/LeonardoQuezado/api-tarefas-django.git
 cd api-tarefas-django
 python -m venv venv
 source venv/bin/activate  # Linux/Mac

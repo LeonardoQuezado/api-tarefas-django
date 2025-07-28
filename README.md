@@ -48,7 +48,7 @@ API RESTful completa para gerenciamento de tarefas desenvolvida com Django REST 
 
 - **Backend:** Django 5.2.4, Django REST Framework 3.16
 - **Autenticação:** JWT via djangorestframework-simplejwt
-- **Banco de Dados:** PostgreSQL (Docker), SQLite (desenvolvimento)
+- **Banco de Dados:** PostgreSQL (Docker)
 - **Cache:** Redis 7
 - **Containerização:** Docker & Docker Compose
 - **Email:** SMTP com Mailtrap (testado e funcionando)
